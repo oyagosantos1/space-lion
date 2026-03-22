@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Space Lion — CRM + IRPF 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Montserrat',sans-serif;background:#080c14;color:#e8edf5;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:#111b2e;border-radius:4px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+input,select,textarea{font-family:'Montserrat',sans-serif;}
+#root{min-height:100vh;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef}=React;
+let _accent="#f5a623";
+const T={bg:"#080c14",sur:"#0d1421",sur2:"#111b2e",bor:"rgba(255,255,255,0.07)",bor2:"rgba(255,255,255,0.14)",blue:"#3b82f6",green:"#10b981",red:"#ef4444",yel:"#f59e0b",pur:"#8b5cf6",txt:"#e8edf5",mut:"#6b7a8f",get acc(){return _accent;},get acc2(){return _accent+"bb";}};
+const STAGES=["Recebido","Iniciado","Em Processo","Finalizado","Entregue"];
+const SC={Recebido:"#6b7a8f",Iniciado:"#3b82f6","Em Processo":"#f5a623",Finalizado:"#8b5cf6",Entregue:"#10b981"};
+const TYPES=["CLT","Autônomo","Empresário","Investimentos","Aluguel","Pensão","Exterior"];
+const RESP=["Rafael A.","Carla S.","Thiago M.","Luísa P."];
+const fmt=v=>"R$ "+Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
+const fmtD=d=>d?new Date(d+"T12:00:00").toLocaleDateString("pt-BR"):"—";
+const ago=d=>Math.floor((Date.now()-new Date(d+"T12:00:00"))/864e5);
+const til=d=>Math.floor((new Date(d+"T12:00:00")-Date.now())/864e5);
+const uid=()=>String(Date.now())+String(Math.random()).slice(2,7);
+const today=()=>new Date().toISOString().split("T")[0];
+
+const IC=[
+  {id:"c1",name:"Marina Alves",cpf:"123.456.789-00",email:"marina@email.com",phone:"(11)99999-1111",type:"CLT",status:"cliente",obs:"Declarante desde 2020",kanbanStage:"Finalizado",origem:"Indicação"},
+  {id:"c2",name:"Carlos Ribeiro",cpf:"234.567.890-11",email:"carlos@empresa.com",phone:"(11)99999-2222",type:"Empresário",status:"cliente",obs:"Sócio Ribeiro Ltda",kanbanStage:"Em Processo",origem:"Site"},
+  {id:"c3",name:"Fernanda Silva",cpf:"345.678.901-22",email:"fernanda@email.com",phone:"(11)99999-3333",type:"Investimentos",status:"cliente",obs:"Renda variável",kanbanStage:"Entregue",origem:"Indicação"},
+  {id:"c4",name:"João Paulo M.",cpf:"456.789.012-33",email:"joao@email.com",phone:"(11)99999-4444",type:"Autônomo",status:"cliente",obs:"Médico",kanbanStage:"Iniciado",origem:"Google"},
+  {id:"c5",name:"Beatriz Nunes",cpf:"567.890.123-44",email:"beatriz@email.com",phone:"(11)99999-5555",type:"Aluguel",status:"prospect",obs:"2 imóveis",kanbanStage:"Recebido",origem:"Formulário"},
+];
+const II=[
+  {id:"i1",clientId:"c1",clientName:"Marina Alves",type:"CLT",stage:"Finalizado",value:620,year:2026,prazo:"2026-05-30",responsible:"Carla S.",obs:"",createdAt:"2026-01-10",updatedAt:"2026-03-20",docs:{informe:true,deducoes:true,depend:false}},
+  {id:"i2",clientId:"c2",clientName:"Carlos Ribeiro",type:"Empresário",stage:"Em Processo",value:1280,year:2026,prazo:"2026-05-30",responsible:"Rafael A.",obs:"",createdAt:"2026-02-01",updatedAt:"2026-03-21",docs:{informe:true,deducoes:false,depend:false}},
+  {id:"i3",clientId:"c3",clientName:"Fernanda Silva",type:"Investimentos",stage:"Entregue",value:980,year:2026,prazo:"2026-05-30",responsible:"Carla S.",obs:"",createdAt:"2026-01-15",updatedAt:"2026-03-18",docs:{informe:true,deducoes:true,depend:true}},
+  {id:"i4",clientId:"c4",clientName:"João Paulo M.",type:"Autônomo",stage:"Iniciado",value:750,year:2026,prazo:"2026-05-30",responsible:"Thiago M.",obs:"",createdAt:"2026-02-10",updatedAt:"2026-03-12",docs:{informe:false,deducoes:false,depend:false}},
+  {id:"i5",clientId:"c5",clientName:"Beatriz Nunes",type:"Aluguel",stage:"Recebido",value:580,year:2026,prazo:"2026-04-10",responsible:"Rafael A.",obs:"",createdAt:"2026-03-05",updatedAt:"2026-03-05",docs:{informe:false,deducoes:false,depend:false}},
+];
+const IP=[
+  {id:"p1",clientName:"Marina Alves",value:620,paid:true,method:"PIX",date:"2026-01-15",due:"2026-02-01"},
+  {id:"p2",clientName:"Carlos Ribeiro",value:1280,paid:false,method:"Boleto",date:null,due:"2026-02-28"},
+  {id:"p3",clientName:"Fernanda Silva",value:980,paid:true,method:"PIX",date:"2026-01-20",due:"2026-01-30"},
+  {id:"p4",clientName:"João Paulo M.",value:750,paid:false,method:"Transferência",date:null,due:"2026-03-15"},
+  {id:"p5",clientName:"Beatriz Nunes",value:580,paid:false,method:"PIX",date:null,due:"2026-03-31"},
+];
+
+function Card({children,style,onClick}){return <div onClick={onClick} style={{background:T.sur,border:`1px solid ${T.bor}`,borderRadius:14,padding:20,position:"relative",overflow:"hidden",transition:"all .2s",cursor:onClick?"pointer":"default",...style}} onMouseEnter={e=>{if(onClick){e.currentTarget.style.borderColor=T.bor2;e.currentTarget.style.transform="translateY(-1px)";}}} onMouseLeave={e=>{if(onClick){e.currentTarget.style.borderColor=T.bor;e.currentTarget.style.transform="";} }}>{children}</div>;}
+function Btn({children,variant="primary",onClick,style,full,disabled}){const vs={primary:{background:`linear-gradient(135deg,${_accent},${_accent}bb)`,color:"#000",border:"none"},ghost:{background:T.sur2,color:T.txt,border:`1px solid ${T.bor}`},danger:{background:`${T.red}22`,color:T.red,border:`1px solid ${T.red}44`},outline:{background:"transparent",color:_accent,border:`1px solid ${_accent}66`}};return <button disabled={disabled} onClick={onClick} style={{padding:"8px 16px",borderRadius:8,fontFamily:"'Montserrat',sans-serif",fontSize:11,fontWeight:700,cursor:disabled?"not-allowed":"pointer",letterSpacing:"0.06em",textTransform:"uppercase",transition:"all .2s",width:full?"100%":"auto",opacity:disabled?0.5:1,...vs[variant],...style}} onMouseEnter={e=>{if(!disabled)e.currentTarget.style.opacity="0.8";}} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>{children}</button>;}
+function Toggle({on,onChange}){return <div onClick={()=>onChange(!on)} style={{width:44,height:24,background:on?_accent:"rgba(255,255,255,0.12)",borderRadius:20,position:"relative",cursor:"pointer",transition:"background .2s",flexShrink:0}}><div style={{position:"absolute",top:3,left:on?23:3,width:18,height:18,background:"#fff",borderRadius:"50%",transition:"left .2s"}}/></div>;}
+function Inp({val,set,placeholder,type="text",style,rows}){const s={background:T.sur2,border:`1px solid ${T.bor}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:T.txt,width:"100%",fontFamily:"'Montserrat',sans-serif",outline:"none",...style};const h={onFocus:e=>e.target.style.borderColor=_accent+"99",onBlur:e=>e.target.style.borderColor=T.bor};if(rows)return <textarea value={val||""} onChange={e=>set(e.target.value)} placeholder={placeholder} rows={rows} style={{...s,resize:"vertical"}} {...h}/>;return <input value={val||""} onChange={e=>set(e.target.value)} placeholder={placeholder} type={type} style={s} {...h}/>;}
+function Sel({val,set,opts,style}){return <select value={val||""} onChange={e=>set(e.target.value)} style={{background:T.sur2,border:`1px solid ${T.bor}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:T.txt,width:"100%",cursor:"pointer",fontFamily:"'Montserrat',sans-serif",outline:"none",...style}}>{opts.map(o=><option key={o.v!=null?o.v:o} value={o.v!=null?o.v:o}>{o.l||o}</option>)}</select>;}
+function FG({label,children,half}){return <div style={{marginBottom:13,flex:half?"1":"unset"}}><div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:T.mut,marginBottom:5}}>{label}</div>{children}</div>;}
+function Chip({label,color}){return <span style={{fontSize:9,fontWeight:700,padding:"3px 9px",borderRadius:20,background:`${color}22`,color,textTransform:"uppercase",letterSpacing:"0.06em",whiteSpace:"nowrap"}}>{label}</span>;}
+function StageBadge({stage}){return <Chip label={stage} color={SC[stage]||T.mut}/>;}
+function STitle({children}){return <div style={{display:"flex",alignItems:"center",gap:8,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em"}}><div style={{width:3,height:12,background:_accent,borderRadius:2}}/>{children}</div>;}
+function SHead({title,action,onAction}){return <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}><STitle>{title}</STitle>{action&&<span onClick={onAction} style={{fontSize:11,color:T.mut,cursor:"pointer",fontWeight:600}} onMouseEnter={e=>e.target.style.color=_accent} onMouseLeave={e=>e.target.style.color=T.mut}>{action}</span>}</div>;}
+function KPI({icon,value,label,sub,color}){return <Card><div style={{width:38,height:38,borderRadius:10,background:`${color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,marginBottom:12}}>{icon}</div><div style={{fontSize:26,fontWeight:900,lineHeight:1,marginBottom:3,letterSpacing:"-0.02em"}}>{value}</div><div style={{fontSize:10,color:T.mut,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700}}>{label}</div>{sub&&<div style={{fontSize:11,color:T.mut,marginTop:5}}>{sub}</div>}<div style={{position:"absolute",bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${color},transparent)`,borderRadius:"0 0 14px 14px"}}/></Card>;}
+function Modal({title,sub,children,onClose,wide}){return <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}><div style={{background:T.sur,border:`1px solid ${T.bor2}`,borderRadius:18,padding:28,width:wide?700:480,maxWidth:"96vw",maxHeight:"90vh",overflowY:"auto",animation:"slideIn .25s ease"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><div style={{fontSize:16,fontWeight:800,marginBottom:3}}>{title}</div>{sub&&<div style={{fontSize:12,color:T.mut}}>{sub}</div>}</div><button onClick={onClose} style={{width:30,height:30,borderRadius:8,background:T.sur2,border:`1px solid ${T.bor}`,cursor:"pointer",fontSize:14,color:T.txt,marginLeft:16,flexShrink:0}}>✕</button></div>{children}</div></div>;}
+function MFoot({children}){return <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:22,paddingTop:16,borderTop:`1px solid ${T.bor}`}}>{children}</div>;}
+function Toast({data}){if(!data)return null;return <div style={{position:"fixed",bottom:24,right:24,background:T.sur,border:`1px solid ${T.bor2}`,borderRadius:10,padding:"12px 18px",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:10,zIndex:9999,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"slideIn .3s ease"}}><span style={{fontSize:16}}>{data.icon}</span>{data.msg}</div>;}
+
+function Dashboard({irpf,clients,payments,goTo,toast}){
+  const fat=payments.reduce((a,p)=>a+p.value,0),rec=payments.filter(p=>p.paid).reduce((a,p)=>a+p.value,0);
+  const alerts=irpf.filter(i=>ago(i.updatedAt)>=7&&i.stage!=="Entregue");
+  return <div style={{animation:"fadeUp .35s ease"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:24}}>
+      <div><h1 style={{fontSize:20,fontWeight:800}}>Dashboard IRPF 2026</h1><p style={{fontSize:12,color:T.mut,marginTop:3}}>CRM + Gestão IRPF · <span style={{color:T.green,fontWeight:700}}>● Ao vivo</span></p></div>
+      <span style={{background:`${_accent}1f`,border:`1px solid ${_accent}44`,color:_accent,fontSize:11,fontWeight:700,padding:"7px 14px",borderRadius:8}}>Exercício 2026</span>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
+      <KPI icon="📁" value={irpf.length} label="Total IRPF" color={T.blue}/>
+      <KPI icon="⚡" value={irpf.filter(i=>!["Entregue","Finalizado"].includes(i.stage)).length} label="Em Andamento" color={_accent}/>
+      <KPI icon="👥" value={clients.length} label="Clientes CRM" color={T.pur}/>
+      <KPI icon="🚀" value={irpf.filter(i=>i.stage==="Entregue").length} label="Entregues" color={T.green}/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16,marginBottom:20}}>
+      <div>
+        <SHead title="Financeiro" action="Ver módulo →" onAction={()=>goTo("financeiro")}/>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
+          {[{l:"Faturamento",v:fmt(fat),c:_accent},{l:"Recebido",v:fmt(rec),c:T.green},{l:"A Receber",v:fmt(fat-rec),c:T.yel}].map(x=><Card key={x.l} style={{padding:14}}><div style={{fontSize:10,color:T.mut,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>{x.l}</div><div style={{fontSize:18,fontWeight:900,color:x.c,marginTop:5}}>{x.v}</div></Card>)}
+        </div>
+      </div>
+      <div>
+        <SHead title="Pipeline" action="Kanban →" onAction={()=>goTo("kanban")}/>
+        <Card style={{padding:14}}>
+          {STAGES.map(st=>{const n=irpf.filter(i=>i.stage===st).length,col=SC[st];return <div key={st} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><div style={{width:7,height:7,borderRadius:"50%",background:col,flexShrink:0}}/><span style={{fontSize:11,flex:1,color:T.mut}}>{st}</span><span style={{fontWeight:800,color:col}}>{n}</span></div>;})}
+        </Card>
+      </div>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:16}}>
+      <div>
+        <SHead title="Alertas" action="Ver todos →" onAction={()=>goTo("alertas")}/>
+        <Card style={{padding:14}}>
+          {alerts.length===0&&<div style={{textAlign:"center",color:T.mut,fontSize:12,padding:"16px 0"}}>✅ Sem alertas</div>}
+          {alerts.slice(0,4).map(i=><div key={i.id} style={{display:"flex",gap:10,padding:"10px 12px",borderRadius:10,marginBottom:8,background:`${T.red}11`,border:`1px solid ${T.red}33`,cursor:"pointer"}} onClick={()=>goTo("alertas")}><span>🔴</span><div><div style={{fontSize:12,fontWeight:700}}>{i.clientName}</div><div style={{fontSize:11,color:T.mut}}>Parado há {ago(i.updatedAt)}d</div></div></div>)}
+        </Card>
+      </div>
+      <div>
+        <SHead title="Movimentações Recentes" action="Ver IRPF →" onAction={()=>goTo("irpf")}/>
+        <Card style={{padding:"0 20px"}}>
+          <div style={{display:"flex",padding:"10px 0 8px",fontSize:9,color:T.mut,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,borderBottom:`1px solid ${T.bor}`}}><span style={{flex:1}}>Cliente</span><span style={{width:100}}>Tipo</span><span style={{width:120}}>Etapa</span><span style={{width:80,textAlign:"right"}}>Valor</span></div>
+          {irpf.slice(0,6).map(i=><div key={i.id} onClick={()=>goTo("irpf")} style={{cursor:"pointer",display:"flex",alignItems:"center",padding:"9px 0",borderBottom:`1px solid ${T.bor}`,fontSize:12}}><div style={{flex:1,fontWeight:600}}>{i.clientName}</div><div style={{width:100,fontSize:11,color:T.mut}}>{i.type}</div><div style={{width:120}}><StageBadge stage={i.stage}/></div><div style={{width:80,textAlign:"right",fontWeight:800,color:T.green}}>{fmt(i.value)}</div></div>)}
+        </Card>
+      </div>
+    </div>
+  </div>;
+}
+
+function KanbanPage({irpf,setIrpf,clients,setClients,toast}){
+  const [dragging,setDragging]=useState(null),[over,setOver]=useState(null),[detail,setDetail]=useState(null);
+  const drop=stage=>{if(!dragging)return;setIrpf(p=>p.map(i=>i.id===dragging.id?{...i,stage,updatedAt:today()}:i));setClients(p=>p.map(c=>c.id===dragging.clientId?{...c,kanbanStage:stage}:c));toast("✅",`${dragging.clientName} → ${stage}`);setDragging(null);setOver(null);};
+  return <div style={{animation:"fadeUp .35s ease"}}>
+    <div style={{marginBottom:20}}><h1 style={{fontSize:20,fontWeight:800}}>Kanban — Pipeline IRPF</h1><p style={{fontSize:12,color:T.mut,marginTop:3}}>Arraste os cards entre colunas · Clique para detalhes</p></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
+      {STAGES.map(stage=>{
+        const cards=irpf.filter(i=>i.stage===stage),col=SC[stage];
+        return <div key={stage} onDragOver={e=>{e.preventDefault();setOver(stage);}} onDragLeave={()=>setOver(null)} onDrop={()=>drop(stage)} style={{background:over===stage?`${col}14`:T.sur2,border:`2px solid ${over===stage?col:T.bor}`,borderRadius:14,padding:12,minHeight:440,transition:"all .2s"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:"50%",background:col}}/><span style={{fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",color:col}}>{stage}</span></div>
+            <span style={{background:`${col}22`,color:col,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:12}}>{cards.length}</span>
+          </div>
+          <div style={{fontSize:11,color:T.mut,marginBottom:10}}>{fmt(cards.reduce((a,c)=>a+c.value,0))}</div>
+          {cards.map(card=>{
+            const d=ago(card.updatedAt),pd=til(card.prazo);
+            return <div key={card.id} draggable onDragStart={()=>setDragging(card)} onDragEnd={()=>{setDragging(null);setOver(null);}} onClick={()=>setDetail({card,client:clients.find(c=>c.id===card.clientId)})}
+              style={{background:T.sur,border:`1px solid ${T.bor}`,borderRadius:12,padding:12,marginBottom:10,cursor:"grab",opacity:dragging?.id===card.id?0.4:1,userSelect:"none",transition:"all .2s"}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=col+"66";e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.bor;e.currentTarget.style.transform="";}}>
+              <div style={{fontWeight:700,fontSize:13,marginBottom:4,display:"flex",alignItems:"center",gap:5}}>{d>=7&&<span style={{color:T.red,fontSize:10}}>⚠</span>}{card.clientName}</div>
+              <Chip label={card.type} color={T.blue}/>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}><span style={{fontSize:12,fontWeight:800,color:T.green}}>{fmt(card.value)}</span><span style={{fontSize:10,color:pd<=5?T.red:pd<=14?T.yel:T.mut}}>{pd<0?"Vencido":pd<=7?`${pd}d`:fmtD(card.prazo)}</span></div>
+              <div style={{marginTop:8,height:3,background:T.bor,borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${(STAGES.indexOf(stage)+1)/STAGES.length*100}%`,background:col}}/></div>
+              <div style={{marginTop:5,fontSize:10,color:T.mut}}>{card.responsible}</div>
+            </div>;
+          })}
+          {cards.length===0&&<div style={{textAlign:"center",color:T.mut,fontSize:12,padding:"24px 0",border:`2px dashed ${T.bor}`,borderRadius:10}}>Vazio</div>}
+        </div>;
+      })}
+    </div>
+    {detail&&<Modal title={detail.card.clientName} sub={`${detail.card.type} · ${detail.card.stage}`} onClose={()=>setDetail(null)}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {[["Etapa",<StageBadge stage={detail.card.stage}/>],["Valor",<span style={{fontWeight:800,color:T.green}}>{fmt(detail.card.value)}</span>],["Responsável",detail.card.responsible],["Prazo",fmtD(detail.card.prazo)],["Tipo",<Chip label={detail.card.type} color={T.blue}/>],["Origem",detail.client?.origem||"Manual"]].map(([l,v])=><div key={l} style={{background:T.sur2,borderRadius:10,padding:"10px 14px"}}><div style={{fontSize:9,color:T.mut,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:4}}>{l}</div><div style={{fontSize:13,fontWeight:600}}>{v}</div></div>)}
+      </div>
+      <MFoot><Btn variant="ghost" onClick={()=>setDetail(null)}>Fechar</Btn></MFoot>
+    </Modal>}
+  </div>;
+}
+
+function ClientesPage({clients,setClients,irpf,setIrpf,toast}){
+  const [search,setSearch]=useState(""),[sf,setSf]=useState("all"),[modal,setModal]=useState(null),[form,setForm]=useState({}),[detail,setDetail]=useState(null);
+  const fld=k=>v=>setForm(p=>({...p,[k]:v}));
+  const filtered=clients.filter(c=>(!search||c.name?.toLowerCase().includes(search.toLowerCase())||c.cpf?.includes(search))&&(sf==="all"||c.status===sf));
+  const openNew=()=>{setForm({name:"",cpf:"",email:"",phone:"",type:"CLT",status:"cliente",obs:"",kanbanStage:"Recebido",origem:"Indicação"});setModal("new");};
+  const openEdit=c=>{setForm({...c});setModal("edit");};
+  const save=()=>{
+    if(!form.name||!form.cpf){toast("⚠️","Preencha nome e CPF");return;}
+    if(modal==="new"){const nc={...form,id:uid(),createdAt:today()};setClients(p=>[nc,...p]);setIrpf(p=>[{id:uid(),clientId:nc.id,clientName:form.name,type:form.type||"CLT",stage:form.kanbanStage||"Recebido",value:0,year:2026,prazo:"2026-05-30",responsible:"Rafael A.",obs:"Via CRM",createdAt:today(),updatedAt:today(),docs:{informe:false,deducoes:false,depend:false}},...p]);toast("✅",`${form.name} → Kanban "${form.kanbanStage||"Recebido"}"!`);}
+    else{setClients(p=>p.map(c=>c.id===form.id?form:c));toast("✅","Salvo!");}
+    setModal(null);
+  };
+  const del=id=>{setClients(p=>p.filter(c=>c.id!==id));toast("🗑️","Removido");};
+  return <div style={{animation:"fadeUp .35s ease"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+      <div><h1 style={{fontSize:20,fontWeight:800}}>Clientes — CRM</h1><p style={{fontSize:12,color:T.mut,marginTop:3}}>{clients.length} contatos · ao cadastrar entra no Kanban</p></div>
+      <Btn onClick={openNew}>+ Novo Cliente</Btn>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
+      <KPI icon="👥" value={clients.filter(c=>c.status==="cliente").length} label="Clientes Ativos" color={T.blue}/>
+      <KPI icon="🎯" value={clients.filter(c=>c.status==="prospect").length} label="Prospects" color={T.pur}/>
+      <KPI icon="📋" value={clients.filter(c=>c.origem==="Formulário").length} label="Via Formulário" color={T.green}/>
+      <KPI icon="📄" value={irpf.length} label="Declarações" color={_accent}/>
+    </div>
+    <div style={{display:"flex",gap:10,marginBottom:16}}>
+      <Inp val={search} set={setSearch} placeholder="Buscar por nome ou CPF..." style={{width:280}}/>
+      {[["all","Todos"],["cliente","Clientes"],["prospect","Prospects"]].map(([v,l])=><button key={v} onClick={()=>setSf(v)} style={{padding:"6px 14px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:`1px solid ${sf===v?_accent+"55":T.bor}`,background:sf===v?`${_accent}1a`:T.sur2,color:sf===v?_accent:T.mut}}>{l}</button>)}
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+      {filtered.map(c=>{
+        const decls=irpf.filter(i=>i.clientId===c.id),col=SC[c.kanbanStage]||T.mut;
+        return <Card key={c.id} style={{padding:18,cursor:"pointer"}} onClick={()=>setDetail(c)}>
+          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${T.blue}44,${T.pur}44)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:T.blue,flexShrink:0}}>{c.name?.charAt(0)||"?"}</div>
+              <div><div style={{fontWeight:700,fontSize:13,marginBottom:3}}>{c.name}</div><Chip label={c.status} color={c.status==="cliente"?T.green:T.pur}/></div>
+            </div>
+            <div style={{display:"flex",gap:5}}>
+              <button onClick={e=>{e.stopPropagation();openEdit(c);}} style={{width:26,height:26,borderRadius:6,border:`1px solid ${T.bor}`,background:T.sur2,cursor:"pointer",fontSize:12}}>✏️</button>
+              <button onClick={e=>{e.stopPropagation();del(c.id);}} style={{width:26,height:26,borderRadius:6,border:`1px solid ${T.red}44`,background:`${T.red}11`,cursor:"pointer",fontSize:12}}>🗑</button>
+            </div>
+          </div>
+          <div style={{fontSize:11,color:T.mut,marginBottom:2}}>📧 {c.email||"—"}</div>
+          <div style={{fontSize:11,color:T.mut,marginBottom:2}}>📱 {c.phone||"—"}</div>
+          <div style={{fontSize:11,color:T.mut,marginBottom:10}}>📋 {c.cpf||"—"}</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><Chip label={c.type||"—"} color={T.blue}/><span style={{fontSize:11,color:T.mut}}>{decls.length} decl.</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",background:`${col}11`,borderRadius:8,border:`1px solid ${col}33`}}><div style={{width:6,height:6,borderRadius:"50%",background:col}}/><span style={{fontSize:10,fontWeight:700,color:col}}>Kanban: {c.kanbanStage||"—"}</span></div>
+        </Card>;
+      })}
+      {filtered.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",padding:"48px 0",color:T.mut}}>Nenhum cliente encontrado</div>}
+    </div>
+    {modal&&<Modal title={modal==="new"?"Novo Cliente":"Editar Cliente"} onClose={()=>setModal(null)} wide>
+      <div style={{display:"flex",gap:12}}><FG label="Nome *" half><Inp val={form.name} set={fld("name")} placeholder="Nome completo"/></FG><FG label="CPF *" half><Inp val={form.cpf} set={fld("cpf")} placeholder="000.000.000-00"/></FG></div>
+      <div style={{display:"flex",gap:12}}><FG label="E-mail" half><Inp val={form.email} set={fld("email")} placeholder="email@email.com" type="email"/></FG><FG label="Telefone" half><Inp val={form.phone} set={fld("phone")} placeholder="(11) 99999-0000"/></FG></div>
+      <div style={{display:"flex",gap:12}}><FG label="Tipo de Renda" half><Sel val={form.type} set={fld("type")} opts={TYPES}/></FG><FG label="Status" half><Sel val={form.status} set={fld("status")} opts={[{v:"cliente",l:"Cliente Ativo"},{v:"prospect",l:"Prospect"}]}/></FG></div>
+      <div style={{display:"flex",gap:12}}><FG label="Etapa no Kanban" half><Sel val={form.kanbanStage||"Recebido"} set={fld("kanbanStage")} opts={STAGES}/><div style={{fontSize:10,color:T.mut,marginTop:3}}>💡 Cliente entra nesta etapa</div></FG><FG label="Origem" half><Sel val={form.origem||"Indicação"} set={fld("origem")} opts={["Indicação","Site","Google","Instagram","Formulário","Outro"]}/></FG></div>
+      <FG label="Observações"><Inp val={form.obs} set={fld("obs")} placeholder="Observações..." rows={3}/></FG>
+      <MFoot><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn onClick={save}>{modal==="new"?"Cadastrar → Kanban":"Salvar"}</Btn></MFoot>
+    </Modal>}
+    {detail&&<Modal title={detail.name} sub={`${detail.type} · ${detail.status}`} onClose={()=>setDetail(null)} wide>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {[["CPF",detail.cpf],["E-mail",detail.email||"—"],["Telefone",detail.phone||"—"],["Tipo",detail.type],["Kanban",<StageBadge stage={detail.kanbanStage}/>],["Origem",detail.origem||"—"]].map(([l,v])=><div key={l} style={{background:T.sur2,borderRadius:10,padding:"10px 14px"}}><div style={{fontSize:9,color:T.mut,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:4}}>{l}</div><div style={{fontSize:13,fontWeight:600}}>{v}</div></div>)}
+      </div>
+      <div style={{fontSize:12,fontWeight:800,marginBottom:10}}>Declarações IRPF</div>
+      {irpf.filter(i=>i.clientId===detail.id).map(i=><div key={i.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${T.bor}`}}><div style={{flex:1}}><div style={{fontSize:12,fontWeight:600}}>IRPF {i.year}</div><div style={{fontSize:11,color:T.mut}}>{i.responsible}</div></div><StageBadge stage={i.stage}/><span style={{fontWeight:800,color:T.green}}>{fmt(i.value)}</span></div>)}
+      <MFoot><Btn variant="ghost" onClick={()=>setDetail(null)}>Fechar</Btn></MFoot>
+    </Modal>}
+  </div>;
+}
+
+function IRPFPage({irpf,setIrpf,clients,toast}){
+  const [fStage,setFStage]=useState(""),[fType,setFType]=useState(""),[fSearch,setFSearch]=useState(""),[modal,setModal]=useState(null),[form,setForm]=useState({});
+  const sf=k=>v=>setForm(p=>({...p,[k]:v}));
+  const filtered=irpf.filter(i=>(!fStage||i.stage===fStage)&&(!fType||i.type===fType)&&(!fSearch||i.clientName.toLowerCase().includes(fSearch.toLowerCase())));
+  const openNew=()=>{setForm({clientId:"",clientName:"",type:"CLT",stage:"Recebido",value:"",year:2026,prazo:"2026-05-30",responsible:"Rafael A.",obs:""});setModal("new");};
+  const openEdit=i=>{setForm({...i});setModal("edit");};
+  const save=()=>{if(!form.clientName||!form.value){toast("⚠️","Preencha cliente e valor");return;}const rec={...form,value:parseFloat(form.value)||0,updatedAt:today()};if(modal==="new")setIrpf(p=>[{...rec,id:uid(),createdAt:today()},...p]);else setIrpf(p=>p.map(i=>i.id===form.id?rec:i));toast("✅","Salvo!");setModal(null);};
+  const del=id=>{setIrpf(p=>p.filter(i=>i.id!==id));toast("🗑️","Removido");};
+  const move=(id,dir)=>{setIrpf(p=>p.map(i=>{if(i.id!==id)return i;const idx=STAGES.indexOf(i.stage),ns=STAGES[idx+dir];return ns?{...i,stage:ns,updatedAt:today()}:i;}));toast("✅","Etapa atualizada!");};
+  return <div style={{animation:"fadeUp .35s ease"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+      <div><h1 style={{fontSize:20,fontWeight:800}}>Declarações IRPF</h1><p style={{fontSize:12,color:T.mut,marginTop:3}}>{irpf.length} declarações</p></div>
+      <Btn onClick={openNew}>+ Nova Declaração</Btn>
+    </div>
+    <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+      <Inp val={fSearch} set={setFSearch} placeholder="Buscar cliente..." style={{width:220}}/>
+      <Sel val={fStage} set={setFStage} opts={[{v:"",l:"Todas as etapas"},...STAGES.map(s=>({v:s,l:s}))]} style={{width:160}}/>
+      <Sel val={fType} set={setFType} opts={[{v:"",l:"Todos os tipos"},...TYPES.map(t=>({v:t,l:t}))]} style={{width:150}}/>
+      {(fStage||fType||fSearch)&&<Btn variant="ghost" onClick={()=>{setFStage("");setFType("");setFSearch("");}}>Limpar</Btn>}
+    </div>
+    <Card style={{padding:"0 20px"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1.8fr 90px 110px 100px 80px 70px 130px",gap:8,padding:"10px 0 8px",fontSize:9,color:T.mut,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,borderBottom:`1px solid ${T.bor}`}}><span>Cliente</span><span>Tipo</span><span>Etapa</span><span>Responsável</span><span>Prazo</span><span style={{textAlign:"right"}}>Valor</span><span style={{textAlign:"right"}}>Ações</span></div>
+      {filtered.length===0&&<div style={{padding:"32px 0",textAlign:"center",color:T.mut}}>Nenhuma declaração encontrada</div>}
+      {filtered.map(i=>{const d=ago(i.updatedAt),pd=til(i.prazo);return<div key={i.id} style={{display:"grid",gridTemplateColumns:"1.8fr 90px 110px 100px 80px 70px 130px",gap:8,padding:"11px 0",borderBottom:`1px solid ${T.bor}`,alignItems:"center",fontSize:12}}>
+        <div><div style={{fontWeight:700,display:"flex",alignItems:"center",gap:5}}>{d>=7&&i.stage!=="Entregue"&&<span style={{color:T.red,fontSize:11}}>⚠</span>}{i.clientName}</div><div style={{fontSize:10,color:T.mut}}>há {d}d</div></div>
+        <Chip label={i.type} color={T.blue}/><StageBadge stage={i.stage}/>
+        <div style={{fontSize:11,color:T.mut}}>{i.responsible}</div>
+        <div style={{fontSize:11,color:pd<=5?T.red:pd<=14?T.yel:T.mut}}>{fmtD(i.prazo)}</div>
+        <div style={{textAlign:"right",fontWeight:800,color:T.green}}>{fmt(i.value)}</div>
+        <div style={{display:"flex",gap:4,justifyContent:"flex-end"}}>
+          {STAGES.indexOf(i.stage)>0&&<button onClick={()=>move(i.id,-1)} style={{width:26,height:26,borderRadius:6,border:`1px solid ${T.bor}`,background:T.sur2,cursor:"pointer",color:T.mut,fontSize:11}}>◀</button>}
+          {STAGES.indexOf(i.stage)<4&&<button onClick={()=>move(i.id,1)} style={{width:26,height:26,borderRadius:6,border:`1px solid ${_accent}44`,background:`${_accent}11`,cursor:"pointer",color:_accent,fontSize:11}}>▶</button>}
+          <button onClick={()=>openEdit(i)} style={{width:26,height:26,borderRadius:6,border:`1px solid ${T.bor}`,background:T.sur2,cursor:"pointer",fontSize:12}}>✏️</button>
+          <button onClick={()=>del(i.id)} style={{width:26,height:26,borderRadius:6,border:`1px solid ${T.red}44`,background:`${T.red}11`,cursor:"pointer",fontSize:12}}>🗑</button>
+        </div>
+      </div>;})}
+    </Card>
+    {modal&&<Modal title={modal==="new"?"Nova Declaração":"Editar"} onClose={()=>setModal(null)} wide>
+      <div style={{display:"flex",gap:12}}><FG label="Cliente *" half><Sel val={form.clientId||""} set={v=>{const c=clients.find(c=>String(c.id)===String(v));setForm(p=>({...p,clientId:v,clientName:c?.name||"",type:c?.type||p.type}));}} opts={[{v:"",l:"Selecione..."},...clients.map(c=>({v:c.id,l:c.name}))]}/></FG><FG label="Tipo" half><Sel val={form.type} set={sf("type")} opts={TYPES}/></FG></div>
+      <div style={{display:"flex",gap:12}}><FG label="Etapa" half><Sel val={form.stage} set={sf("stage")} opts={STAGES}/></FG><FG label="Responsável" half><Sel val={form.responsible} set={sf("responsible")} opts={RESP}/></FG></div>
+      <div style={{display:"flex",gap:12}}><FG label="Valor (R$) *" half><Inp val={form.value} set={sf("value")} type="number" placeholder="0.00"/></FG><FG label="Prazo" half><Inp val={form.prazo} set={sf("prazo")} type="date"/></FG></div>
+      <FG label="Observações"><Inp val={form.obs} set={sf("obs")} rows={2}/></FG>
+      <MFoot><Btn variant="ghost" onClick={()=>setModal(null)}>Cancelar</Btn><Btn onClick={save}>{modal==="new"?"Criar":"Salvar"}</Btn></MFoot>
+    </Modal>}
+  </div>;
+}
+
+function FinanceiroPage({payments,setPayments,irpf,toast}){
+  const [filter,setFilter]=useState("all");
+  const fat=payments.reduce((a,p)=>a+p.value,0),rec=payments.filter(p=>p.paid).reduce((a,p)=>a+p.value,0);
+  const filtered=payments.filter(p=>filter==="all"?true:filter==="paid"?p.paid:!p.paid);
+  const markPaid=id=>{setPayments(p=>p.map(x=>x.id===id?{...x,paid:true,date:today()}:x));toast("💰","Pago!");};
+  const byType=TYPES.map(t=>({t,v:irpf.filter(i=>i.type===t).reduce((a,i)=>a+i.value,0),n:irpf.filter(i=>i.type===t).length})).filter(x=>x.n>0).sort((a,b)=>b.v-a.v);
+  const mx=Math.max(...byType.map(b=>b.v),1);
+  return <div style={{animation:"fadeUp .35s ease"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><div><h1 style={{fontSize:20,fontWeight:800}}>Financeiro</h1></div><Btn onClick={()=>toast("📥","Gerando...")}>📥 Exportar</Btn></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
+      <KPI icon="💰" value={fmt(fat)} label="Faturamento" color={_accent}/>
+      <KPI icon="✓" value={fmt(rec)} label="Recebido" sub={`${fat?Math.round(rec/fat*100):0}%`} color={T.green}/>
+      <KPI icon="⏳" value={fmt(fat-rec)} label="A Receber" color={T.yel}/>
+      <KPI icon="📊" value={fmt(irpf.length?Math.round(fat/irpf.length):0)} label="Ticket Médio" color={T.blue}/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+      <Card style={{padding:18}}><STitle>Receita por Tipo</STitle><div style={{marginTop:14}}>{byType.map(b=><div key={b.t} style={{marginBottom:12}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:5}}><span style={{fontWeight:600}}>{b.t}</span><span style={{fontWeight:800,color:T.green}}>{fmt(b.v)}</span></div><div style={{height:6,background:T.bor,borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:`${b.v/mx*100}%`,background:`linear-gradient(90deg,${_accent},${_accent}bb)`,borderRadius:4}}/></div></div>)}</div></Card>
+      <Card style={{padding:18}}><STitle>Status de Pagamento</STitle><div style={{display:"flex",justifyContent:"center",margin:"16px 0"}}><svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="52" fill="none" stroke={T.bor} strokeWidth="16"/>{fat>0&&<circle cx="70" cy="70" r="52" fill="none" stroke={T.green} strokeWidth="16" strokeDasharray={`${2*Math.PI*52*rec/fat} 999`} transform="rotate(-90 70 70)"/>}<text x="70" y="65" textAnchor="middle" fill={T.txt} fontFamily="Montserrat" fontSize="16" fontWeight="900">{fat?Math.round(rec/fat*100):0}%</text><text x="70" y="82" textAnchor="middle" fill={T.mut} fontFamily="Montserrat" fontSize="10">recebido</text></svg></div><div style={{display:"flex",gap:10}}>{[{l:"Recebido",v:fmt(rec),c:T.green},{l:"A Receber",v:fmt(fat-rec),c:T.yel}].map(x=><div key={x.l} style={{flex:1,background:T.sur2,borderRadius:10,padding:"10px",textAlign:"center"}}><div style={{fontSize:9,color:T.mut,textTransform:"uppercase",fontWeight:700,marginBottom:4}}>{x.l}</div><div style={{fontSize:15,fontWeight:900,color:x.c}}>{x.v}</div></div>)}</div></Card>
+    </div>
+    <SHead title="Cobranças"/>
+    <div style={{display:"flex",gap:8,marginBottom:14}}>{[["all","Todos"],["pending","Pendentes"],["paid","Recebidos"]].map(([v,l])=><button key={v} onClick={()=>setFilter(v)} style={{padding:"6px 14px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:`1px solid ${filter===v?_accent+"55":T.bor}`,background:filter===v?`${_accent}1a`:T.sur2,color:filter===v?_accent:T.mut}}>{l}</button>)}</div>
+    <Card style={{padding:"0 20px"}}>{filtered.map(p=><div key={p.id} style={{display:"grid",gridTemplateColumns:"2fr 100px 100px 180px 80px",gap:8,padding:"11px 0",borderBottom:`1px solid ${T.bor}`,alignItems:"center",fontSize:12}}>
+      <div style={{fontWeight:600}}>{p.clientName}</div><div style={{fontSize:11,color:T.mut}}>{p.method}</div><div style={{fontSize:11,color:til(p.due)<0&&!p.paid?T.red:T.mut}}>{fmtD(p.due)}</div>
+      <div>{p.paid?<Chip label="✓ Recebido" color={T.green}/>:<div style={{display:"flex",gap:6,alignItems:"center"}}><Chip label={til(p.due)<0?"Vencido":"Pendente"} color={til(p.due)<0?T.red:T.yel}/><button onClick={()=>markPaid(p.id)} style={{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:20,background:`${T.green}22`,border:`1px solid ${T.green}44`,color:T.green,cursor:"pointer",fontFamily:"'Montserrat',sans-serif"}}>Marcar pago</button></div>}</div>
+      <div style={{textAlign:"right",fontWeight:800,color:T.green}}>{fmt(p.value)}</div>
+    </div>)}</Card>
+  </div>;
+}
+
+function AlertasPage({irpf,setIrpf,toast}){
+  const atrasados=irpf.filter(i=>ago(i.updatedAt)>=7&&i.stage!=="Entregue"),prazoProx=irpf.filter(i=>til(i.prazo)<=7&&i.stage!=="Entregue"),semDocs=irpf.filter(i=>!i.docs?.informe&&i.stage!=="Entregue");
+  const bump=id=>{setIrpf(p=>p.map(i=>i.id===id?{...i,updatedAt:today()}:i));toast("✅","Atualizado!");};
+  function AG({items,title,type}){return <div style={{marginBottom:22}}>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><STitle>{title}</STitle><span style={{background:type==="danger"?`${T.red}22`:`${T.yel}22`,color:type==="danger"?T.red:T.yel,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>{items.length}</span></div>
+    {items.length===0?<div style={{textAlign:"center",color:T.mut,fontSize:12,padding:"14px",background:T.sur2,borderRadius:10}}>✅ Sem alertas</div>:items.map(i=><Card key={i.id} style={{padding:14,marginBottom:10,borderColor:type==="danger"?`${T.red}33`:`${T.yel}33`}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,marginBottom:6}}>{i.clientName}</div><div style={{display:"flex",gap:6,marginBottom:6}}><Chip label={i.type} color={T.blue}/><StageBadge stage={i.stage}/></div><div style={{fontSize:11,color:T.mut}}>{ago(i.updatedAt)>=7&&<span style={{color:T.red,fontWeight:700}}>{ago(i.updatedAt)}d sem update · </span>}Prazo: {fmtD(i.prazo)}</div></div><Btn variant="ghost" style={{fontSize:10,padding:"6px 10px"}} onClick={()=>bump(i.id)}>Atualizar</Btn></div></Card>)}
+  </div>;}
+  return <div style={{animation:"fadeUp .35s ease"}}>
+    <div style={{marginBottom:20}}><h1 style={{fontSize:20,fontWeight:800}}>Central de Alertas</h1></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:22}}><KPI icon="🔴" value={atrasados.length} label="Parados +7 dias" color={T.red}/><KPI icon="⏰" value={prazoProx.length} label="Prazo ≤ 7 dias" color={T.yel}/><KPI icon="📄" value={semDocs.length} label="Sem Informe" color={T.pur}/></div>
+    <AG items={atrasados} title="Parados há mais de 7 dias" type="danger"/>
+    <AG items={prazoProx.filter(i=>!atrasados.includes(i))} title="Prazo nos próximos 7 dias" type="warning"/>
+    <AG items={semDocs} title="Sem informe de rendimentos" type="warning"/>
+  </div>;
+}
+
+function RelatoriosPage({irpf,clients,payments,toast}){
+  const fat=payments.reduce((a,p)=>a+p.value,0),rec=payments.filter(p=>p.paid).reduce((a,p)=>a+p.value,0);
+  return <div style={{animation:"fadeUp .35s ease"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><div><h1 style={{fontSize:20,fontWeight:800}}>Relatórios</h1></div><Btn onClick={()=>toast("📥","Exportando...")}>📥 Exportar</Btn></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}><KPI icon="📊" value={`${fat?Math.round((fat-rec)/fat*100):0}%`} label="Inadimplência" color={T.red}/><KPI icon="⚡" value={irpf.filter(i=>i.stage!=="Entregue").length} label="Em Processo" color={T.yel}/><KPI icon="✓" value={irpf.filter(i=>i.stage==="Entregue").length} label="Concluídos" color={T.green}/><KPI icon="👥" value={clients.length} label="Base Total" color={T.blue}/></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
+      {[{title:"Por Etapa",items:STAGES.map(s=>({l:s,n:irpf.filter(i=>i.stage===s).length,v:irpf.filter(i=>i.stage===s).reduce((a,i)=>a+i.value,0),c:SC[s]}))},{title:"Por Tipo",items:TYPES.map(t=>({l:t,n:irpf.filter(i=>i.type===t).length,v:irpf.filter(i=>i.type===t).reduce((a,i)=>a+i.value,0),c:T.blue})).filter(x=>x.n>0)},{title:"Por Responsável",items:RESP.map(r=>({l:r,n:irpf.filter(i=>i.responsible===r).length,v:irpf.filter(i=>i.responsible===r).reduce((a,i)=>a+i.value,0),c:T.pur})).filter(x=>x.n>0)}].map(sec=><Card key={sec.title} style={{padding:18}}><STitle>{sec.title}</STitle><div style={{marginTop:14}}>{sec.items.map(x=><div key={x.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,fontSize:12}}><div style={{display:"flex",alignItems:"center",gap:7}}><div style={{width:7,height:7,borderRadius:"50%",background:x.c}}/><span>{x.l}</span></div><div style={{display:"flex",gap:10}}><span style={{color:T.mut}}>{x.n}</span><span style={{fontWeight:700,color:T.green}}>{fmt(x.v)}</span></div></div>)}</div></Card>)}
+    </div>
+  </div>;
+}
+
+function ConfigPage({toast,accentColor,setAccentColor}){
+  const COLORS=[{c:"#f5a623",n:"Dourado"},{c:"#3b82f6",n:"Azul"},{c:"#10b981",n:"Verde"},{c:"#8b5cf6",n:"Roxo"},{c:"#ef4444",n:"Vermelho"},{c:"#06b6d4",n:"Ciano"}];
+  const [tg,setTg]=useState({a:true,b:true,c:true,d:false,e:true});
+  return <div style={{animation:"fadeUp .35s ease"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><div><h1 style={{fontSize:20,fontWeight:800}}>Configurações</h1></div><Btn onClick={()=>toast("✅","Salvo!")}>Salvar</Btn></div>
+    <Card style={{padding:20,marginBottom:14}}><STitle>🎨 Cor de Destaque</STitle>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginTop:14}}>
+        {COLORS.map(({c,n})=><div key={c} onClick={()=>{setAccentColor(c);_accent=c;toast("🎨",`Cor: ${n}!`);}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,cursor:"pointer",border:`2px solid ${accentColor===c?c:"transparent"}`,background:accentColor===c?`${c}11`:T.sur2,transition:"all .2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=c} onMouseLeave={e=>e.currentTarget.style.borderColor=accentColor===c?c:"transparent"}><div style={{width:24,height:24,borderRadius:6,background:c,flexShrink:0}}/><span style={{fontSize:12,fontWeight:600,color:accentColor===c?c:T.txt}}>{n}</span>{accentColor===c&&<span style={{marginLeft:"auto",color:c}}>✓</span>}</div>)}
+      </div>
+    </Card>
+    <Card style={{padding:20}}><STitle>🔔 Notificações</STitle>
+      {[["Declaração finalizada","Avisar ao concluir","a"],["Documentos pendentes","","b"],["Prazo próximo","5 dias antes","c"],["Resumo semanal","","d"],["Notificar ao mover etapa","","e"]].map(([l,d,k])=><div key={k} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:`1px solid ${T.bor}`}}><div><div style={{fontSize:13,fontWeight:600,marginBottom:2}}>{l}</div>{d&&<div style={{fontSize:11,color:T.mut}}>{d}</div>}</div><Toggle on={tg[k]} onChange={v=>setTg(p=>({...p,[k]:v}))}/></div>)}
+    </Card>
+  </div>;
+}
+
+const NAV=[{id:"dashboard",icon:"⊞",label:"Dashboard",sec:"Principal"},{id:"irpf",icon:"📄",label:"IRPF"},{id:"kanban",icon:"⬡",label:"Kanban"},{id:"financeiro",icon:"💳",label:"Financeiro"},{id:"clientes",icon:"👥",label:"Clientes (CRM)",sec:"Operação"},{id:"alertas",icon:"⚠️",label:"Alertas"},{id:"relatorios",icon:"📊",label:"Relatórios"},{id:"configuracoes",icon:"⚙️",label:"Configurações",sec:"Sistema"}];
+
+function App(){
+  const [screen,setScreen]=useState("login"),[page,setPage]=useState("dashboard"),[toastD,setToastD]=useState(null);
+  const [irpf,setIrpf]=useState(II),[clients,setClients]=useState(IC),[payments,setPayments]=useState(IP),[acc,setAcc]=useState("#f5a623");
+  const tr=useRef();
+  const toast=(icon,msg)=>{setToastD({icon,msg});clearTimeout(tr.current);tr.current=setTimeout(()=>setToastD(null),3200);};
+  const goTo=p=>setPage(p);
+  const alertN=irpf.filter(i=>ago(i.updatedAt)>=7&&i.stage!=="Entregue").length+irpf.filter(i=>til(i.prazo)<=7&&i.stage!=="Entregue").length;
+  const sh={irpf,setIrpf,clients,setClients,payments,setPayments,toast,goTo};
+
+  const render=()=>{switch(page){
+    case "dashboard":return <Dashboard {...sh}/>;
+    case "irpf":return <IRPFPage {...sh}/>;
+    case "kanban":return <KanbanPage {...sh}/>;
+    case "financeiro":return <FinanceiroPage {...sh}/>;
+    case "clientes":return <ClientesPage {...sh}/>;
+    case "alertas":return <AlertasPage {...sh}/>;
+    case "relatorios":return <RelatoriosPage {...sh}/>;
+    case "configuracoes":return <ConfigPage toast={toast} accentColor={acc} setAccentColor={setAcc}/>;
+    default:return null;
+  }};
+
+  if(screen==="login")return <>
+    <div style={{position:"fixed",inset:0,background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 30% 40%,${acc}14,transparent 60%)`}}/>
+      <div style={{position:"relative",zIndex:1,width:420,background:T.sur,border:`1px solid ${T.bor}`,borderRadius:20,padding:"48px 40px",boxShadow:"0 40px 80px rgba(0,0,0,0.5)",animation:"fadeUp .4s ease"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28,justifyContent:"center"}}>
+          <div style={{width:48,height:48,background:`linear-gradient(135deg,${acc},${acc}bb)`,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,boxShadow:`0 0 28px ${acc}66`}}>🦁</div>
+          <div><div style={{fontSize:22,fontWeight:800}}>Space Lion</div><div style={{fontSize:11,color:T.mut,letterSpacing:"0.15em",textTransform:"uppercase"}}>CRM · IRPF 2026</div></div>
+        </div>
+        {[{l:"E-mail",t:"email",dv:"admin@spacelion.com.br"},{l:"Senha",t:"password",dv:"admin123"}].map(fi=><div key={fi.l} style={{marginBottom:14}}>
+          <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:T.mut,marginBottom:6}}>{fi.l}</div>
+          <input type={fi.t} defaultValue={fi.dv} style={{width:"100%",background:T.sur2,border:`1px solid ${T.bor}`,borderRadius:10,padding:"11px 14px",fontFamily:"'Montserrat',sans-serif",fontSize:13,color:T.txt,outline:"none"}} onFocus={e=>e.target.style.borderColor=acc+"99"} onBlur={e=>e.target.style.borderColor=T.bor}/>
+        </div>)}
+        <button onClick={()=>setScreen("app")} style={{width:"100%",padding:13,background:`linear-gradient(135deg,${acc},${acc}bb)`,border:"none",borderRadius:10,fontFamily:"'Montserrat',sans-serif",fontSize:13,fontWeight:700,color:"#000",cursor:"pointer",textTransform:"uppercase",marginTop:6,boxShadow:`0 4px 20px ${acc}55`}}>Entrar →</button>
+      </div>
+    </div>
+    <Toast data={toastD}/>
+  </>;
+
+  return <>
+    <div style={{display:"flex",minHeight:"100vh",background:T.bg}}>
+      <div style={{width:228,background:T.sur,borderRight:`1px solid ${T.bor}`,display:"flex",flexDirection:"column",position:"fixed",top:0,left:0,bottom:0,zIndex:100}}>
+        <div style={{padding:"22px 20px 18px",borderBottom:`1px solid ${T.bor}`,display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:38,height:38,background:`linear-gradient(135deg,${acc},${acc}bb)`,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,boxShadow:`0 0 18px ${acc}55`}}>🦁</div>
+          <div><div style={{fontSize:14,fontWeight:800}}>Space Lion</div><div style={{fontSize:9,color:T.mut,letterSpacing:"0.12em",textTransform:"uppercase"}}>CRM · IRPF 2026</div></div>
+        </div>
+        <nav style={{padding:"14px 12px",flex:1,overflowY:"auto"}}>
+          {NAV.map(item=><div key={item.id}>
+            {item.sec&&<div style={{fontSize:9,textTransform:"uppercase",letterSpacing:"0.18em",color:T.mut,padding:"0 8px",margin:"14px 0 5px",fontWeight:600}}>{item.sec}</div>}
+            <div onClick={()=>goTo(item.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,fontSize:12,fontWeight:page===item.id?600:500,color:page===item.id?acc:T.mut,background:page===item.id?`${acc}1a`:"transparent",border:`1px solid ${page===item.id?acc+"28":"transparent"}`,cursor:"pointer",transition:"all .2s",marginBottom:2,userSelect:"none"}}
+              onMouseEnter={e=>{if(page!==item.id){e.currentTarget.style.color=T.txt;e.currentTarget.style.background="rgba(255,255,255,0.04)";}}}
+              onMouseLeave={e=>{if(page!==item.id){e.currentTarget.style.color=T.mut;e.currentTarget.style.background="transparent";}}}>
+              <span style={{fontSize:14,width:18,textAlign:"center"}}>{item.icon}</span>{item.label}
+              {item.id==="alertas"&&alertN>0&&<span style={{marginLeft:"auto",background:T.red,color:"#fff",fontSize:9,fontWeight:700,padding:"1px 7px",borderRadius:20}}>{alertN}</span>}
+              {item.id==="irpf"&&<span style={{marginLeft:"auto",background:acc,color:"#000",fontSize:9,fontWeight:700,padding:"1px 7px",borderRadius:20}}>{irpf.length}</span>}
+            </div>
+          </div>)}
+        </nav>
+        <div style={{padding:14,borderTop:`1px solid ${T.bor}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,background:T.sur2,borderRadius:10,padding:"10px 12px"}}>
+            <div style={{width:30,height:30,background:`linear-gradient(135deg,${T.blue},${T.pur})`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>RA</div>
+            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600}}>Rafael A.</div><div style={{fontSize:10,color:T.mut}}>Administrador</div></div>
+            <span onClick={()=>{setScreen("login");setPage("dashboard");}} title="Sair" style={{fontSize:16,opacity:0.4,cursor:"pointer"}} onMouseEnter={e=>e.target.style.opacity="1"} onMouseLeave={e=>e.target.style.opacity="0.4"}>⎋</span>
+          </div>
+        </div>
+      </div>
+      <div style={{marginLeft:228,flex:1,padding:28,minHeight:"100vh"}}>{render()}</div>
+    </div>
+    <Toast data={toastD}/>
+  </>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
